@@ -8,8 +8,8 @@ const CONFIG = {
     TARGET_COUNT: 4,
     GRID_NUMBER_MIN: 1,
     GRID_NUMBER_MAX: 9,
-    TARGET_NUMBER_MIN: 10,
-    TARGET_NUMBER_MAX: 18
+    TARGET_NUMBER_MIN: 13,
+    TARGET_NUMBER_MAX: 19
 };
 
 // ============================================================================
