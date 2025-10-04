@@ -241,15 +241,15 @@ document.addEventListener('DOMContentLoaded', () => {
     const gameArea = document.getElementById('game-area');
     const gameWrapper = document.getElementById('game-wrapper');
     const refreshIndicator = document.getElementById('refresh-indicator');
-    
+
     gameArea.addEventListener('touchstart', (e) => {
         startY = e.touches[0].clientY;
     });
-    
+
     gameArea.addEventListener('touchmove', (e) => {
         const currentY = e.touches[0].clientY;
         const pullDistance = currentY - startY;
-        
+
         if (pullDistance > 0 && pullDistance <= 120) {
             // Desplazar el wrapper y mostrar el icono
             gameWrapper.style.transform = `translateY(${Math.min(pullDistance * 0.5, 60)}px)`;
@@ -257,10 +257,10 @@ document.addEventListener('DOMContentLoaded', () => {
             refreshIndicator.style.transform = `translateX(-50%) rotate(${pullDistance * 2}deg)`;
         }
     }, { passive: true });
-    
+
     gameArea.addEventListener('touchend', (e) => {
         const pullDistance = e.changedTouches[0].clientY - startY;
-        
+
         if (pullDistance > 100) {
             // Animación de refresh
             refreshIndicator.style.transform = 'translateX(-50%) rotate(360deg)';
@@ -272,7 +272,7 @@ document.addEventListener('DOMContentLoaded', () => {
             resetPullToRefresh();
         }
     });
-    
+
     const resetPullToRefresh = () => {
         gameWrapper.style.transform = 'translateY(0)';
         refreshIndicator.style.opacity = '0';
