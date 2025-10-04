@@ -102,6 +102,7 @@ header h1 {
     align-items: center;
     background-color: var(--color-bg-game);
     overflow: hidden;
+    transition: opacity var(--transition-fast);
 }
 
 #game-wrapper {

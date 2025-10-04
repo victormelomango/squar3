@@ -215,6 +215,14 @@ const init = (providedGridNumbers = null, providedTargetNumbers = null) => {
     console.log('Números objetivo:', targetNumbers);
 };
 
+/**
+ * Refresca el juego con nuevos números
+ */
+const refreshGame = () => {
+    const { gridNumbers, targetNumbers } = getUrlParameters();
+    init(gridNumbers, targetNumbers);
+};
+
 // ============================================================================
 // INICIALIZACIÓN
 // ============================================================================
@@ -227,6 +235,14 @@ document.addEventListener('DOMContentLoaded', () => {
 
     // Prevenir scroll en dispositivos táctiles
     document.body.addEventListener('touchmove', (e) => e.preventDefault(), { passive: false });
+
+    // Pull to refresh: deslizar hacia abajo en el área de juego
+    let startY = 0;
+    const gameArea = document.getElementById('game-area');
+    gameArea.addEventListener('touchstart', (e) => startY = e.touches[0].clientY);
+    gameArea.addEventListener('touchend', (e) => {
+        if (e.changedTouches[0].clientY - startY > 100) refreshGame();
+    });
 
     // Leer parámetros de la URL e inicializar
     const { gridNumbers, targetNumbers } = getUrlParameters();
