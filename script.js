@@ -143,9 +143,21 @@ const generateGridNumbers = (providedNumbers) => {
  * Genera los números objetivo
  */
 const generateTargetNumbers = (providedNumbers) => {
-    return Array.from({ length: CONFIG.TARGET_COUNT }, (_, i) => {
-        return providedNumbers?.[i] ?? getRandomInRange(CONFIG.TARGET_NUMBER_MIN, CONFIG.TARGET_NUMBER_MAX);
-    });
+    if (providedNumbers) return providedNumbers;
+
+    const gridSum = gameState.numbers.reduce((sum, num) => sum + num, 0);
+    const targets = [];
+    let targetSum = 0;
+
+    for (let i = 0; i < CONFIG.TARGET_COUNT; i++) {
+        const maxAllowed = gridSum - targetSum - (CONFIG.TARGET_COUNT - i - 1) * CONFIG.TARGET_NUMBER_MIN;
+        const max = Math.min(CONFIG.TARGET_NUMBER_MAX, maxAllowed);
+        const num = getRandomInRange(CONFIG.TARGET_NUMBER_MIN, max);
+        targets.push(num);
+        targetSum += num;
+    }
+
+    return targets;
 };
 
 /**
@@ -200,12 +212,12 @@ const init = (providedGridNumbers = null, providedTargetNumbers = null) => {
     buttonGrid.innerHTML = '';
     columnNumbersContainer.innerHTML = '';
 
-    // Generar números
+    // Generar números del grid primero (necesario para validación de objetivos)
     const gridNumbers = generateGridNumbers(providedGridNumbers);
-    const targetNumbers = generateTargetNumbers(providedTargetNumbers);
-
-    // Guardar en el estado
     gameState.numbers = [...gridNumbers];
+
+    // Generar números objetivo (con validación de suma)
+    const targetNumbers = generateTargetNumbers(providedTargetNumbers);
 
     // Crear elementos del juego
     initializeGrid(buttonGrid, gridNumbers);
