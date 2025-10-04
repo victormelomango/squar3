@@ -29,7 +29,7 @@
     --font-size-xl: 1.5rem;
     --font-size-lg: 1.2rem;
     --font-size-md: 1rem;
-    --font-size-responsive: clamp(1rem, 3vw, 1.5rem);
+    --font-size-responsive: clamp(1.5rem, 5vw, 2.5rem);
 
     /* Transiciones */
     --transition-fast: 0.15s ease;
