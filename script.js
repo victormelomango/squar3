@@ -9,7 +9,8 @@ const CONFIG = {
     GRID_NUMBER_MIN: 1,
     GRID_NUMBER_MAX: 9,
     TARGET_NUMBER_MIN: 13,
-    TARGET_NUMBER_MAX: 19
+    TARGET_NUMBER_MAX: 19,
+    COLORS: ['#4ecd5dff', '#45b7d1', '#f9ca24', '#ff6b6b'] // Verde, Azul, Amarillo, Rojo
 };
 
 // ============================================================================
@@ -19,7 +20,9 @@ const CONFIG = {
 const gameState = {
     buttons: Array(CONFIG.GRID_SIZE).fill(false),
     numbers: [],
-    targetNumbers: Array(CONFIG.TARGET_COUNT).fill(false)
+    targetNumbers: Array(CONFIG.TARGET_COUNT).fill(false),
+    completedTargets: [], // Array de objetos: { targetIndex, targetValue, usedButtons: [{index, value}], color }
+    availableColors: [...CONFIG.COLORS] // Colores disponibles (se van consumiendo)
 };
 
 // ============================================================================
@@ -78,23 +81,151 @@ const getUrlParameters = () => {
 };
 
 // ============================================================================
-// LÓGICA DE JUEGO
+// LÓGICA DE JUEGO - HELPERS
+// ============================================================================
+
+/**
+ * Recolecta los botones actualmente marcados con su información
+ * @returns {Array<{index: number, value: number}>} Array de botones marcados
+ */
+const getMarkedButtons = () => {
+    const marked = [];
+    gameState.buttons.forEach((isMarked, index) => {
+        if (isMarked) {
+            marked.push({
+                index,
+                value: gameState.numbers[index]
+            });
+        }
+    });
+    return marked;
+};
+
+/**
+ * Limpia todos los botones marcados (estado y visual)
+ */
+const clearAllMarkedButtons = () => {
+    gameState.buttons.fill(false);
+    document.querySelectorAll('.square-button.marked').forEach(btn => {
+        btn.classList.remove('marked');
+    });
+};
+
+/**
+ * Restaura el estilo visual de botones específicos a su estado por defecto
+ * @param {Array<{index: number}>} buttons - Array de botones a restaurar
+ */
+const restoreButtonsVisuals = (buttons) => {
+    buttons.forEach(btn => {
+        const element = document.querySelector(`.square-button[data-id="${btn.index}"]`);
+        if (element) {
+            element.style.backgroundColor = '';
+            element.classList.remove('marked', 'completed');
+        }
+    });
+};
+
+// ============================================================================
+// LÓGICA DE JUEGO - INTERACCIONES
 // ============================================================================
 
 /**
  * Alterna el estado de un botón del grid
  */
 const toggleButton = (element, index) => {
-    gameState.buttons[index] = !gameState.buttons[index];
-    element.classList.toggle('marked');
+    const isCurrentlyMarked = gameState.buttons[index];
+
+    if (isCurrentlyMarked) {
+        gameState.buttons[index] = false;
+        element.style.backgroundColor = '';
+        element.classList.remove('marked');
+    } else {
+        if (gameState.availableColors.length === 0) {
+            console.warn('⚠️ No hay colores disponibles. Completa todos los objetivos.');
+            return;
+        }
+        gameState.buttons[index] = true;
+        element.style.backgroundColor = gameState.availableColors[0];
+        element.classList.add('marked');
+    }
+};
+
+/**
+ * Completa un objetivo con los botones actualmente marcados
+ * @param {HTMLElement} element - Elemento DOM del objetivo
+ * @param {number} columnIndex - Índice de la columna del objetivo
+ */
+const completeObjective = (element, columnIndex) => {
+    const markedButtons = getMarkedButtons();
+
+    if (markedButtons.length === 0) {
+        console.warn('⚠️ No se puede completar un objetivo sin botones marcados');
+        return;
+    }
+
+    const targetValue = parseInt(element.textContent);
+    const usedColor = gameState.availableColors.shift();
+
+    gameState.targetNumbers[columnIndex] = true;
+    element.classList.add('achieved');
+    element.style.color = usedColor;
+
+    // Marcar botones como completados (efecto visual deshabilitado)
+    markedButtons.forEach(btn => {
+        const buttonElement = document.querySelector(`.square-button[data-id="${btn.index}"]`);
+        if (buttonElement) {
+            buttonElement.classList.add('completed');
+        }
+    });
+
+    gameState.completedTargets.push({
+        targetIndex: columnIndex,
+        targetValue,
+        usedButtons: markedButtons,
+        color: usedColor
+    });
+
+    clearAllMarkedButtons();
+
+    console.log(`✅ Objetivo ${targetValue} completado con:`, markedButtons);
+};
+
+/**
+ * Desmarca un objetivo completado y restaura su estado
+ * @param {HTMLElement} element - Elemento DOM del objetivo
+ * @param {number} columnIndex - Índice de la columna del objetivo
+ */
+const uncompleteObjective = (element, columnIndex) => {
+    const lastIndex = gameState.completedTargets
+        .map(t => t.targetIndex)
+        .lastIndexOf(columnIndex);
+
+    if (lastIndex === -1) return;
+
+    const removed = gameState.completedTargets.splice(lastIndex, 1)[0];
+
+    gameState.targetNumbers[columnIndex] = false;
+    element.classList.remove('achieved');
+    element.style.color = '';
+
+    restoreButtonsVisuals(removed.usedButtons);
+
+    gameState.availableColors.push(removed.color);
+
+    console.log(`❌ Objetivo desmarcado:`, removed);
 };
 
 /**
  * Alterna el estado de un número objetivo
  */
-const toggleTargetNumber = (element, col) => {
-    gameState.targetNumbers[col] = !gameState.targetNumbers[col];
-    element.classList.toggle('achieved');
+const toggleTargetNumber = (element, columnIndex) => {
+    const wasAchieved = gameState.targetNumbers[columnIndex];
+
+    if (!wasAchieved) {
+        completeObjective(element, columnIndex);
+    } else {
+        uncompleteObjective(element, columnIndex);
+    }
 };
 
 /**
@@ -114,13 +245,13 @@ const createGridButton = (index, number) => {
 /**
  * Crea un número objetivo
  */
-const createTargetNumber = (col, number) => {
+const createTargetNumber = (columnIndex, number) => {
     const element = document.createElement('div');
     element.className = 'column-number';
-    element.dataset.col = col;
+    element.dataset.col = columnIndex;
     element.textContent = number;
 
-    addClickListener(element, () => toggleTargetNumber(element, col));
+    addClickListener(element, () => toggleTargetNumber(element, columnIndex));
 
     return element;
 };
@@ -134,13 +265,13 @@ const generateGridNumbers = (providedNumbers) => {
         (_, i) => i + CONFIG.GRID_NUMBER_MIN
     );
 
-    return Array.from({ length: CONFIG.GRID_SIZE }, (_, i) => {
-        return providedNumbers?.[i] ?? getRandomFromArray(availableNumbers);
-    });
+    return Array.from({ length: CONFIG.GRID_SIZE }, (_, i) =>
+        providedNumbers?.[i] ?? getRandomFromArray(availableNumbers)
+    );
 };
 
 /**
- * Genera los números objetivo
+ * Genera los números objetivo con validación de suma
  */
 const generateTargetNumbers = (providedNumbers) => {
     if (providedNumbers) return providedNumbers;
@@ -179,8 +310,8 @@ const initializeGrid = (container, numbers) => {
 const initializeTargets = (container, numbers) => {
     const fragment = document.createDocumentFragment();
 
-    numbers.forEach((number, col) => {
-        fragment.appendChild(createTargetNumber(col, number));
+    numbers.forEach((number, columnIndex) => {
+        fragment.appendChild(createTargetNumber(columnIndex, number));
     });
 
     container.appendChild(fragment);
@@ -193,6 +324,8 @@ const resetGameState = () => {
     gameState.buttons.fill(false);
     gameState.numbers = [];
     gameState.targetNumbers.fill(false);
+    gameState.completedTargets = [];
+    gameState.availableColors = [...CONFIG.COLORS];
 };
 
 /**
@@ -207,24 +340,19 @@ const init = (providedGridNumbers = null, providedTargetNumbers = null) => {
         return;
     }
 
-    // Limpiar estado previo
     resetGameState();
     buttonGrid.innerHTML = '';
     columnNumbersContainer.innerHTML = '';
 
-    // Generar números del grid primero (necesario para validación de objetivos)
     const gridNumbers = generateGridNumbers(providedGridNumbers);
     gameState.numbers = [...gridNumbers];
 
-    // Generar números objetivo (con validación de suma)
     const targetNumbers = generateTargetNumbers(providedTargetNumbers);
 
-    // Crear elementos del juego
     initializeGrid(buttonGrid, gridNumbers);
     initializeTargets(columnNumbersContainer, targetNumbers);
 
-    console.log('Juego inicializado con números del grid:', gameState.numbers);
-    console.log('Números objetivo:', targetNumbers);
+    console.log('🎮 Juego inicializado');
 };
 
 /**
@@ -240,15 +368,11 @@ const refreshGame = () => {
 // ============================================================================
 
 document.addEventListener('DOMContentLoaded', () => {
-    console.log('Juego cargado correctamente');
-
-    // Prevenir zoom en dispositivos táctiles
+    // Prevenir zoom y scroll en dispositivos táctiles
     document.addEventListener('gesturestart', (e) => e.preventDefault());
-
-    // Prevenir scroll en dispositivos táctiles
     document.body.addEventListener('touchmove', (e) => e.preventDefault(), { passive: false });
 
-    // Pull to refresh: deslizar hacia abajo en el área de juego
+    // Pull-to-refresh: deslizar hacia abajo regenera el juego
     let startY = 0;
     const gameArea = document.getElementById('game-area');
     gameArea.addEventListener('touchstart', (e) => startY = e.touches[0].clientY);
@@ -256,7 +380,9 @@ document.addEventListener('DOMContentLoaded', () => {
         if (e.changedTouches[0].clientY - startY > 100) refreshGame();
     });
 
-    // Leer parámetros de la URL e inicializar
+    // Inicializar con parámetros de URL si existen
     const { gridNumbers, targetNumbers } = getUrlParameters();
     init(gridNumbers, targetNumbers);
+
+    console.log('✅ Aplicación cargada');
 });

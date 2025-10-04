@@ -153,9 +153,13 @@ footer {
     transform: scale(0.95);
 }
 
-.square-button.marked {
-    background-color: var(--color-accent);
+.square-button.completed {
+    opacity: 0.5;
+    pointer-events: none;
+    cursor: default;
 }
+
+/* Los colores se aplican dinámicamente via JavaScript */
 
 /* ============================================================================
    NÚMEROS OBJETIVO
@@ -174,21 +178,19 @@ footer {
     justify-content: center;
     font-size: var(--font-size-responsive);
     font-weight: bold;
-    color: var(--color-primary);
+    color: #000;
     aspect-ratio: 1;
     cursor: pointer;
     transition: opacity var(--transition-normal),
-                transform var(--transition-fast);
+                transform var(--transition-fast),
+                color var(--transition-normal);
 }
 
 .column-number:active {
     transform: scale(0.95);
 }
 
-.column-number.achieved {
-    text-decoration: line-through;
-    opacity: 0.5;
-}
+/* El color se aplica dinámicamente cuando se completa */
 
 /* ============================================================================
    RESPONSIVE - TABLET Y MÓVILES
