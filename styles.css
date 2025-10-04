@@ -145,6 +145,7 @@ footer {
     font-size: var(--font-size-responsive);
     font-weight: bold;
     color: var(--color-text);
+    position: relative;
     transition: background-color var(--transition-fast),
                 transform var(--transition-fast);
 }
@@ -154,9 +155,19 @@ footer {
 }
 
 .square-button.completed {
-    opacity: 0.5;
     pointer-events: none;
     cursor: default;
+}
+
+.square-button.completed::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background-color: rgba(255, 255, 255, 0.5);
+    pointer-events: none;
 }
 
 /* Los colores se aplican dinámicamente via JavaScript */
