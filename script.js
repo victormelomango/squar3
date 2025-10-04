@@ -236,13 +236,48 @@ document.addEventListener('DOMContentLoaded', () => {
     // Prevenir scroll en dispositivos táctiles
     document.body.addEventListener('touchmove', (e) => e.preventDefault(), { passive: false });
 
-    // Pull to refresh: deslizar hacia abajo en el área de juego
+    // Pull to refresh con feedback visual
     let startY = 0;
     const gameArea = document.getElementById('game-area');
-    gameArea.addEventListener('touchstart', (e) => startY = e.touches[0].clientY);
-    gameArea.addEventListener('touchend', (e) => {
-        if (e.changedTouches[0].clientY - startY > 100) refreshGame();
+    const gameWrapper = document.getElementById('game-wrapper');
+    const refreshIndicator = document.getElementById('refresh-indicator');
+    
+    gameArea.addEventListener('touchstart', (e) => {
+        startY = e.touches[0].clientY;
     });
+    
+    gameArea.addEventListener('touchmove', (e) => {
+        const currentY = e.touches[0].clientY;
+        const pullDistance = currentY - startY;
+        
+        if (pullDistance > 0 && pullDistance <= 120) {
+            // Desplazar el wrapper y mostrar el icono
+            gameWrapper.style.transform = `translateY(${Math.min(pullDistance * 0.5, 60)}px)`;
+            refreshIndicator.style.opacity = Math.min(pullDistance / 100, 1);
+            refreshIndicator.style.transform = `translateX(-50%) rotate(${pullDistance * 2}deg)`;
+        }
+    }, { passive: true });
+    
+    gameArea.addEventListener('touchend', (e) => {
+        const pullDistance = e.changedTouches[0].clientY - startY;
+        
+        if (pullDistance > 100) {
+            // Animación de refresh
+            refreshIndicator.style.transform = 'translateX(-50%) rotate(360deg)';
+            setTimeout(() => {
+                refreshGame();
+                resetPullToRefresh();
+            }, 300);
+        } else {
+            resetPullToRefresh();
+        }
+    });
+    
+    const resetPullToRefresh = () => {
+        gameWrapper.style.transform = 'translateY(0)';
+        refreshIndicator.style.opacity = '0';
+        refreshIndicator.style.transform = 'translateX(-50%) rotate(0deg)';
+    };
 
     // Leer parámetros de la URL e inicializar
     const { gridNumbers, targetNumbers } = getUrlParameters();
