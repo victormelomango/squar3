@@ -252,9 +252,10 @@ document.addEventListener('DOMContentLoaded', () => {
 
         if (pullDistance > 0 && pullDistance <= 120) {
             // Desplazar el wrapper y mostrar el icono
-            gameWrapper.style.transform = `translateY(${Math.min(pullDistance * 0.5, 60)}px)`;
+            const displacement = Math.min(pullDistance * 0.5, 60);
+            gameWrapper.style.transform = `translateY(${displacement}px)`;
             refreshIndicator.style.opacity = Math.min(pullDistance / 100, 1);
-            refreshIndicator.style.transform = `translateX(-50%) rotate(${pullDistance * 2}deg)`;
+            refreshIndicator.style.transform = `translateX(-50%) translateY(${displacement - 80}px) rotate(${pullDistance * 2}deg)`;
         }
     }, { passive: true });
 
@@ -263,7 +264,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
         if (pullDistance > 100) {
             // Animación de refresh
-            refreshIndicator.style.transform = 'translateX(-50%) rotate(360deg)';
+            refreshIndicator.style.transform = 'translateX(-50%) translateY(-80px) rotate(360deg)';
             setTimeout(() => {
                 refreshGame();
                 resetPullToRefresh();
@@ -276,7 +277,7 @@ document.addEventListener('DOMContentLoaded', () => {
     const resetPullToRefresh = () => {
         gameWrapper.style.transform = 'translateY(0)';
         refreshIndicator.style.opacity = '0';
-        refreshIndicator.style.transform = 'translateX(-50%) rotate(0deg)';
+        refreshIndicator.style.transform = 'translateX(-50%) translateY(-80px) rotate(0deg)';
     };
 
     // Leer parámetros de la URL e inicializar
