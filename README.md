@@ -1,13 +1,15 @@
-# 🎮 Cuadrícula Interactiva 4x4
+# 🎮 Squar3 Game
 
-Un juego web interactivo construido con HTML, CSS y JavaScript puro donde puedes cambiar colores de celdas y aplicar efectos de gravedad.
+Juego minimalista de números con grid 4x4 interactivo.
 
 ## 🌟 Características
 
-- **Cuadrícula 4x4**: 16 celdas con números aleatorios del 1 al 9
-- **Cambio de colores**: Haz clic en las celdas para cambiar sus colores
-- **6 colores diferentes**: Secuencia de colores vibrantes
-- **Efecto de gravedad**: Las celdas seleccionadas desaparecen y las restantes "caen"
+- **Grid 4x4**: 16 botones con números aleatorios del 1 al 9
+- **Números objetivo**: 4 números (13-19) debajo de cada columna
+- **Pull-to-refresh**: Desliza hacia abajo en móvil para regenerar
+- **Diseño minimalista**: Blanco, negro y verde neón
+- **Responsive**: Perfectamente adaptado para móviles
+- **Parámetros URL**: Personaliza los números del juego
 - **Suma garantizada**: Los números generados suman más de 68
 - **Botón reiniciar**: Restaura el tablero inicial
 - **Responsive**: Funciona en dispositivos móviles
@@ -67,6 +69,39 @@ Un juego web interactivo construido con HTML, CSS y JavaScript puro donde puedes
 - **Algoritmo de gravedad**: Simulación física realista
 - **Generación aleatoria controlada**: Suma garantizada superior a 68
 - **Estado persistente**: Conserva el tablero inicial para reiniciar
+
+## 🔧 Desarrollo
+
+### 🆕 Actualizar versión (cache busting)
+Cada vez que hagas cambios en CSS o JS, ejecuta:
+
+```powershell
+.\update-version.ps1
+```
+
+Esto incrementará automáticamente la versión en `index.html` (ej: `?v=1.2` → `?v=1.3`) para forzar la recarga en navegadores y evitar problemas de caché.
+
+### 📤 Subir cambios
+```bash
+git add .
+git commit -m "Descripción de cambios"
+git push
+```
+
+## 🎯 Uso de parámetros URL
+
+Personaliza el juego pasando números en la URL:
+
+```
+# Grid personalizado (16 números del 1-9)
+?grid=1,2,3,4,5,6,7,8,9,1,2,3,4,5,6,7
+
+# Objetivos personalizados (4 números del 13-19)
+?target=13,14,15,16
+
+# Ambos combinados
+?grid=1,1,1,1,2,2,2,2,3,3,3,3,4,4,4,4&target=13,14,15,16
+```
 
 ## 🔧 Estructura del Proyecto
 
