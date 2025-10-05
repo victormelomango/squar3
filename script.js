@@ -229,8 +229,31 @@ const toggleTargetNumber = (element, columnIndex) => {
 };
 
 /**
- * Crea un botón del grid
+ * Crea una columna completa con 4 botones y 1 objetivo
  */
+const createColumn = (columnIndex, numbers, targetNumber) => {
+    const column = document.createElement('div');
+    column.className = 'game-column';
+    column.dataset.column = columnIndex;
+
+    // Crear contenedor de botones
+    const buttonsContainer = document.createElement('div');
+    buttonsContainer.className = 'column-buttons';
+
+    // Añadir 4 botones a la columna
+    numbers.forEach((number, rowIndex) => {
+        const buttonIndex = rowIndex * CONFIG.GRID_COLUMNS + columnIndex;
+        buttonsContainer.appendChild(createGridButton(buttonIndex, number));
+    });
+
+    // Crear objetivo
+    const target = createTargetNumber(columnIndex, targetNumber);
+
+    column.appendChild(buttonsContainer);
+    column.appendChild(target);
+
+    return column;
+};
 const createGridButton = (index, number) => {
     const button = document.createElement('div');
     button.className = 'square-button';
@@ -292,27 +315,22 @@ const generateTargetNumbers = (providedNumbers) => {
 };
 
 /**
- * Inicializa el grid de botones
+ * Inicializa el juego con estructura por columnas
  */
-const initializeGrid = (container, numbers) => {
+const initializeGame = (gridNumbers, targetNumbers) => {
+    const container = document.getElementById('columns-container');
     const fragment = document.createDocumentFragment();
 
-    numbers.forEach((number, index) => {
-        fragment.appendChild(createGridButton(index, number));
-    });
+    for (let col = 0; col < CONFIG.GRID_COLUMNS; col++) {
+        // Obtener los 4 números de esta columna
+        const columnNumbers = [];
+        for (let row = 0; row < CONFIG.GRID_COLUMNS; row++) {
+            const index = row * CONFIG.GRID_COLUMNS + col;
+            columnNumbers.push(gridNumbers[index]);
+        }
 
-    container.appendChild(fragment);
-};
-
-/**
- * Inicializa los números objetivo
- */
-const initializeTargets = (container, numbers) => {
-    const fragment = document.createDocumentFragment();
-
-    numbers.forEach((number, columnIndex) => {
-        fragment.appendChild(createTargetNumber(columnIndex, number));
-    });
+        fragment.appendChild(createColumn(col, columnNumbers, targetNumbers[col]));
+    }
 
     container.appendChild(fragment);
 };
@@ -332,25 +350,22 @@ const resetGameState = () => {
  * Inicializa el juego
  */
 const init = (providedGridNumbers = null, providedTargetNumbers = null) => {
-    const buttonGrid = document.getElementById('button-grid');
-    const columnNumbersContainer = document.getElementById('column-numbers');
+    const container = document.getElementById('columns-container');
 
-    if (!buttonGrid || !columnNumbersContainer) {
-        console.error('No se encontraron los elementos del DOM necesarios.');
+    if (!container) {
+        console.error('No se encontró el contenedor de columnas.');
         return;
     }
 
     resetGameState();
-    buttonGrid.innerHTML = '';
-    columnNumbersContainer.innerHTML = '';
+    container.innerHTML = '';
 
     const gridNumbers = generateGridNumbers(providedGridNumbers);
     gameState.numbers = [...gridNumbers];
 
     const targetNumbers = generateTargetNumbers(providedTargetNumbers);
 
-    initializeGrid(buttonGrid, gridNumbers);
-    initializeTargets(columnNumbersContainer, targetNumbers);
+    initializeGame(gridNumbers, targetNumbers);
 
     console.log('🎮 Juego inicializado');
 };
