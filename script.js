@@ -269,11 +269,11 @@ const generateGridNumbers = (providedNumbers) => {
     );
 
     const result = [];
-    
+
     // Calcular cuántas veces debe aparecer cada número
     const numbersPerValue = Math.floor(CONFIG.GRID_SIZE / availableNumbers.length);
     const remainder = CONFIG.GRID_SIZE % availableNumbers.length;
-    
+
     // Crear pool de números con mínima repetición
     const pool = [];
     availableNumbers.forEach(num => {
@@ -281,18 +281,18 @@ const generateGridNumbers = (providedNumbers) => {
             pool.push(num);
         }
     });
-    
+
     // Añadir números extra aleatoriamente para completar el grid
     for (let i = 0; i < remainder; i++) {
         pool.push(getRandomFromArray(availableNumbers));
     }
-    
+
     // Mezclar el pool (algoritmo Fisher-Yates)
     for (let i = pool.length - 1; i > 0; i--) {
         const j = Math.floor(Math.random() * (i + 1));
         [pool[i], pool[j]] = [pool[j], pool[i]];
     }
-    
+
     return pool;
 };
 

@@ -146,7 +146,6 @@ footer {
     font-weight: bold;
     color: var(--color-text);
     position: relative;
-    aspect-ratio: 1;
     transition: background-color var(--transition-fast),
                 transform var(--transition-fast);
 }
