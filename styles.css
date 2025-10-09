@@ -19,7 +19,7 @@
     --grid-max-size: 500px;
 
     /* Espaciado */
-    --spacing-xs: 6px;
+    --spacing-xs: 5px;
     --spacing-sm: 8px;
     --spacing-md: 10px;
     --spacing-lg: 15px;
@@ -100,7 +100,7 @@ header h1 {
     display: flex;
     justify-content: center;
     align-items: center;
-    background-color: var(--color-bg-light);
+    background-color: var(--color-bg-game);
     overflow: hidden;
     transition: opacity var(--transition-fast);
 }
@@ -120,42 +120,23 @@ footer {
 }
 
 /* ============================================================================
-   ESTRUCTURA POR COLUMNAS
+   GRID DE BOTONES
    ============================================================================ */
 
-#columns-container {
-    display: flex;
-    gap: var(--spacing-sm);
+#button-grid {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    grid-template-rows: repeat(5, 1fr);
     width: var(--grid-size-desktop);
+    height: calc(var(--grid-size-desktop) * 1.25);
     max-width: var(--grid-max-size);
-}
-
-.game-column {
-    flex: 1;
-    display: flex;
-    flex-direction: column;
-    gap: var(--spacing-sm);
-}
-
-.game-column:nth-child(2) {
-    transform: translateX(calc(-1vw - var(--spacing-sm) / 2)) translateY(calc(5vw + var(--spacing-sm) / 2));
-}
-.game-column:nth-child(3) {
-    transform: translateX(calc(2 * (-1vw - var(--spacing-sm) / 2)));
-}
-.game-column:nth-child(4) {
-    transform:  translateX(calc(3 * (-1vw - var(--spacing-sm) / 2))) translateY(calc(5vw + var(--spacing-sm) / 2));
-}
-
-.column-buttons {
-    display: flex;
-    flex-direction: column;
-    gap: var(--spacing-sm);
+    max-height: calc(var(--grid-max-size) * 1.25);
+    outline: var(--border-width) solid var(--border-color);
 }
 
 .square-button {
-    background-color: #f0f0f0;
-    border-radius: 50%;
+    background-color: var(--color-bg-light);
+    outline: var(--border-width) solid var(--border-color);
     cursor: pointer;
     user-select: none;
     display: flex;
@@ -165,8 +146,6 @@ footer {
     font-weight: bold;
     color: var(--color-text);
     position: relative;
-    aspect-ratio: 1;
-    width: 100%;
     transition: background-color var(--transition-fast),
                 transform var(--transition-fast);
 }
@@ -188,7 +167,6 @@ footer {
     right: 0;
     bottom: 0;
     background-color: rgba(255, 255, 255, 0.5);
-    border-radius: 50%;
     pointer-events: none;
 }
 
@@ -198,6 +176,13 @@ footer {
    NÚMEROS OBJETIVO
    ============================================================================ */
 
+#column-numbers {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    width: var(--grid-size-desktop);
+    max-width: var(--grid-max-size);
+}
+
 .column-number {
     display: flex;
     align-items: center;
@@ -206,7 +191,6 @@ footer {
     font-weight: bold;
     color: #000;
     aspect-ratio: 1;
-    width: 100%;
     cursor: pointer;
     transition: opacity var(--transition-normal),
                 transform var(--transition-fast),
@@ -236,7 +220,12 @@ footer {
         padding: var(--spacing-sm);
     }
 
-    #columns-container {
+    #button-grid {
+        width: var(--grid-size-tablet);
+        height: var(--grid-size-tablet);
+    }
+
+    #column-numbers {
         width: var(--grid-size-tablet);
     }
 }
@@ -254,7 +243,12 @@ footer {
         font-size: var(--font-size-md);
     }
 
-    #columns-container {
+    #button-grid {
+        width: var(--grid-size-landscape);
+        height: var(--grid-size-landscape);
+    }
+
+    #column-numbers {
         width: var(--grid-size-landscape);
     }
 }

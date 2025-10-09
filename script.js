@@ -3,13 +3,14 @@
 // ============================================================================
 
 const CONFIG = {
-    GRID_SIZE: 16,
+    GRID_SIZE: 20,
     GRID_COLUMNS: 4,
+    GRID_ROWS: 5,
     TARGET_COUNT: 4,
     GRID_NUMBER_MIN: 1,
     GRID_NUMBER_MAX: 9,
-    TARGET_NUMBER_MIN: 13,
-    TARGET_NUMBER_MAX: 19,
+    TARGET_NUMBER_MIN: 18,
+    TARGET_NUMBER_MAX: 81,
     COLORS: ['#4ecd5dff', '#45b7d1', '#f9ca24', '#ff6b6b'] // Verde, Azul, Amarillo, Rojo
 };
 
@@ -229,31 +230,8 @@ const toggleTargetNumber = (element, columnIndex) => {
 };
 
 /**
- * Crea una columna completa con 4 botones y 1 objetivo
+ * Crea un botón del grid
  */
-const createColumn = (columnIndex, numbers, targetNumber) => {
-    const column = document.createElement('div');
-    column.className = 'game-column';
-    column.dataset.column = columnIndex;
-
-    // Crear contenedor de botones
-    const buttonsContainer = document.createElement('div');
-    buttonsContainer.className = 'column-buttons';
-
-    // Añadir 4 botones a la columna
-    numbers.forEach((number, rowIndex) => {
-        const buttonIndex = rowIndex * CONFIG.GRID_COLUMNS + columnIndex;
-        buttonsContainer.appendChild(createGridButton(buttonIndex, number));
-    });
-
-    // Crear objetivo
-    const target = createTargetNumber(columnIndex, targetNumber);
-
-    column.appendChild(buttonsContainer);
-    column.appendChild(target);
-
-    return column;
-};
 const createGridButton = (index, number) => {
     const button = document.createElement('div');
     button.className = 'square-button';
@@ -280,57 +258,82 @@ const createTargetNumber = (columnIndex, number) => {
 };
 
 /**
- * Genera los números para el grid
+ * Genera los números para el grid con mínima repetición
  */
 const generateGridNumbers = (providedNumbers) => {
+    if (providedNumbers) return providedNumbers;
+
     const availableNumbers = Array.from(
         { length: CONFIG.GRID_NUMBER_MAX - CONFIG.GRID_NUMBER_MIN + 1 },
         (_, i) => i + CONFIG.GRID_NUMBER_MIN
     );
 
-    return Array.from({ length: CONFIG.GRID_SIZE }, (_, i) =>
-        providedNumbers?.[i] ?? getRandomFromArray(availableNumbers)
-    );
+    const result = [];
+    
+    // Calcular cuántas veces debe aparecer cada número
+    const numbersPerValue = Math.floor(CONFIG.GRID_SIZE / availableNumbers.length);
+    const remainder = CONFIG.GRID_SIZE % availableNumbers.length;
+    
+    // Crear pool de números con mínima repetición
+    const pool = [];
+    availableNumbers.forEach(num => {
+        for (let i = 0; i < numbersPerValue; i++) {
+            pool.push(num);
+        }
+    });
+    
+    // Añadir números extra aleatoriamente para completar el grid
+    for (let i = 0; i < remainder; i++) {
+        pool.push(getRandomFromArray(availableNumbers));
+    }
+    
+    // Mezclar el pool (algoritmo Fisher-Yates)
+    for (let i = pool.length - 1; i > 0; i--) {
+        const j = Math.floor(Math.random() * (i + 1));
+        [pool[i], pool[j]] = [pool[j], pool[i]];
+    }
+    
+    return pool;
 };
 
 /**
- * Genera los números objetivo con validación de suma
+ * Genera los números objetivo
  */
 const generateTargetNumbers = (providedNumbers) => {
     if (providedNumbers) return providedNumbers;
 
-    const gridSum = gameState.numbers.reduce((sum, num) => sum + num, 0);
     const targets = [];
-    let targetSum = 0;
 
     for (let i = 0; i < CONFIG.TARGET_COUNT; i++) {
-        const maxAllowed = gridSum - targetSum - (CONFIG.TARGET_COUNT - i - 1) * CONFIG.TARGET_NUMBER_MIN;
-        const max = Math.min(CONFIG.TARGET_NUMBER_MAX, maxAllowed);
-        const num = getRandomInRange(CONFIG.TARGET_NUMBER_MIN, max);
+        const num = getRandomInRange(CONFIG.TARGET_NUMBER_MIN, CONFIG.TARGET_NUMBER_MAX);
         targets.push(num);
-        targetSum += num;
     }
 
     return targets;
 };
 
 /**
- * Inicializa el juego con estructura por columnas
+ * Inicializa el grid de botones
  */
-const initializeGame = (gridNumbers, targetNumbers) => {
-    const container = document.getElementById('columns-container');
+const initializeGrid = (container, numbers) => {
     const fragment = document.createDocumentFragment();
 
-    for (let col = 0; col < CONFIG.GRID_COLUMNS; col++) {
-        // Obtener los 4 números de esta columna
-        const columnNumbers = [];
-        for (let row = 0; row < CONFIG.GRID_COLUMNS; row++) {
-            const index = row * CONFIG.GRID_COLUMNS + col;
-            columnNumbers.push(gridNumbers[index]);
-        }
+    numbers.forEach((number, index) => {
+        fragment.appendChild(createGridButton(index, number));
+    });
 
-        fragment.appendChild(createColumn(col, columnNumbers, targetNumbers[col]));
-    }
+    container.appendChild(fragment);
+};
+
+/**
+ * Inicializa los números objetivo
+ */
+const initializeTargets = (container, numbers) => {
+    const fragment = document.createDocumentFragment();
+
+    numbers.forEach((number, columnIndex) => {
+        fragment.appendChild(createTargetNumber(columnIndex, number));
+    });
 
     container.appendChild(fragment);
 };
@@ -350,22 +353,25 @@ const resetGameState = () => {
  * Inicializa el juego
  */
 const init = (providedGridNumbers = null, providedTargetNumbers = null) => {
-    const container = document.getElementById('columns-container');
+    const buttonGrid = document.getElementById('button-grid');
+    const columnNumbersContainer = document.getElementById('column-numbers');
 
-    if (!container) {
-        console.error('No se encontró el contenedor de columnas.');
+    if (!buttonGrid || !columnNumbersContainer) {
+        console.error('No se encontraron los elementos del DOM necesarios.');
         return;
     }
 
     resetGameState();
-    container.innerHTML = '';
+    buttonGrid.innerHTML = '';
+    columnNumbersContainer.innerHTML = '';
 
     const gridNumbers = generateGridNumbers(providedGridNumbers);
     gameState.numbers = [...gridNumbers];
 
     const targetNumbers = generateTargetNumbers(providedTargetNumbers);
 
-    initializeGame(gridNumbers, targetNumbers);
+    initializeGrid(buttonGrid, gridNumbers);
+    initializeTargets(columnNumbersContainer, targetNumbers);
 
     console.log('🎮 Juego inicializado');
 };
