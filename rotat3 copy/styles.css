@@ -203,13 +203,45 @@ footer {
     }
 }
 
-/* Efecto hover en las bolas */
-.ball:hover {
+/* Bolas negras no son clicables */
+.ball.black {
+    cursor: default;
+    pointer-events: none;
+}
+
+/* Bolas bloqueadas */
+.ball.bloqueada {
+    cursor: default;
+    pointer-events: none;
+    position: relative;
+}
+
+.ball.bloqueada::before {
+    content: 'lock';
+    font-family: 'Material Symbols Outlined';
+    opacity: 0.3;
+    position: absolute;
+    font-size: 30px;
+    color: rgba(255, 255, 255, 0.9);
+    text-shadow: 0 2px 4px rgba(0, 0, 0, 0.5);
+    font-variation-settings:
+        'FILL' 1,
+        'wght' 400,
+        'GRAD' 0,
+        'opsz' 48;
+}
+
+/* Efecto hover en las bolas del tablero (excepto negras y bloqueadas) */
+.espacio:not(.reserva) .ball:not(.black):not(.bloqueada):hover {
     transform: scale(1.1);
 }
 
-.ball:active {
+.espacio:not(.reserva) .ball:not(.black):not(.bloqueada):active {
     transform: scale(0.95);
+}
+
+.ball.black {
+    background: #5D5D5D;
 }
 
 .ball.red {

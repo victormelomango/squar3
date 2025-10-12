@@ -9,9 +9,9 @@
 
 const GAME_CONFIG = {
     GRID_SIZE: 4,
-    SPACES_PER_COLUMN: 4,  // 4 espacios por columna (4x4 = 16 espacios)
     COLORS: ['red', 'green', 'blue', 'yellow'],
-    BALLS_PER_COLOR: 4,  // 4 bolas de cada color (16 total)
+    BALLS_PER_COLOR: 4,
+    BLACK_BALLS_COUNT: 3,
     ANIMATION_DURATION: 800,
     COLUMN_GAP: 5,
     DOUBLE_TAP_THRESHOLD: 300
@@ -62,7 +62,7 @@ function initGame() {
 function generarTableroAleatorio() {
     const gameArea = document.getElementById('game-area');
 
-    // Crear array con 5 bolas de cada color (20 bolas en total)
+    // Crear array con 4 bolas de cada color (16 bolas en total)
     const bolasTablero = [];
     GAME_CONFIG.COLORS.forEach(color => {
         for (let i = 0; i < GAME_CONFIG.BALLS_PER_COLOR; i++) {
@@ -73,17 +73,35 @@ function generarTableroAleatorio() {
     // Mezclar aleatoriamente las bolas del tablero
     shuffleArray(bolasTablero);
 
+    // Crear array con 3 bolas negras y 1 espacio vacío para las reservas
+    const reservas = Array(GAME_CONFIG.BLACK_BALLS_COUNT).fill('black');
+    reservas.push(null);
+    shuffleArray(reservas);
+
     // Crear las 4 columnas
     for (let col = 0; col < GAME_CONFIG.GRID_SIZE; col++) {
         const columna = document.createElement('div');
         columna.className = 'columna';
+        if (col === 0) columna.id = 'columna'; // Primera columna mantiene el id
 
-        // Crear 5 espacios para esta columna
-        for (let fila = 0; fila < GAME_CONFIG.SPACES_PER_COLUMN; fila++) {
+        // Crear espacio de reserva
+        const espacioReserva = document.createElement('div');
+        espacioReserva.className = 'espacio reserva';
+
+        if (reservas[col]) {
+            const bolaReserva = document.createElement('div');
+            bolaReserva.className = `ball ${reservas[col]}`;
+            espacioReserva.appendChild(bolaReserva);
+        }
+
+        columna.appendChild(espacioReserva);
+
+        // Crear 4 espacios de tablero para esta columna
+        for (let fila = 0; fila < GAME_CONFIG.GRID_SIZE; fila++) {
             const espacio = document.createElement('div');
             espacio.className = 'espacio';
 
-            const colorBola = bolasTablero[col * GAME_CONFIG.SPACES_PER_COLUMN + fila];
+            const colorBola = bolasTablero[col * GAME_CONFIG.GRID_SIZE + fila];
             const bola = document.createElement('div');
             bola.className = `ball ${colorBola}`;
             espacio.appendChild(bola);
@@ -113,11 +131,13 @@ function rotateTablero90() {
     if (gameArea.classList.contains('rotating')) return;
     gameArea.classList.add('rotating');
 
-    // Crear matriz 4x4 con todos los espacios
+    // Crear matriz 4x4 con los espacios de tablero (índices 1-4 de cada columna)
     const matriz = [];
     columnas.forEach(columna => {
         const espacios = Array.from(columna.querySelectorAll('.espacio'));
-        matriz.push(espacios);  // Ahora tomamos TODOS los espacios
+        // Solo espacios de tablero (índices 1-4), excluyendo la reserva (índice 0)
+        const espaciosTablero = espacios.slice(1, 5);
+        matriz.push(espaciosTablero);
     });
 
     // Calcular las posiciones actuales de cada espacio
@@ -126,7 +146,7 @@ function rotateTablero90() {
     );
 
     // Calcular la rotación 90° antihorario: nueva[n-1-j][i] = vieja[i][j]
-    const n = GAME_CONFIG.GRID_SIZE;
+    const n = 4;
     const movimientos = []; // Guardar los movimientos necesarios
 
     for (let i = 0; i < n; i++) {
@@ -196,8 +216,15 @@ function rotateTablero90() {
 function setupBallClickEvents() {
     const columnas = document.querySelectorAll('.columna');
 
+    // Primero, limpiar todas las clases bloqueadas
+    document.querySelectorAll('.ball').forEach(ball => {
+        ball.classList.remove('bloqueada');
+    });
+
     columnas.forEach(columna => {
         const espacios = Array.from(columna.querySelectorAll('.espacio'));
+        const reserva = espacios[0];
+        const reservaVacia = !reserva.querySelector('.ball');
 
         espacios.forEach((espacio, index) => {
             const ball = espacio.querySelector('.ball');
@@ -207,8 +234,22 @@ function setupBallClickEvents() {
                 const ballClone = ball.cloneNode(true);
                 ball.parentNode.replaceChild(ballClone, ball);
 
-                // Todas las bolas son clicables
-                ballClone.addEventListener('click', () => handleBallClick(espacio, index, columna));
+                // Bloquear bolas negras siempre
+                if (ballClone.classList.contains('black')) {
+                    ballClone.classList.add('bloqueada');
+                }
+                // Bloquear bolas en la reserva
+                else if (index === 0) {
+                    ballClone.classList.add('bloqueada');
+                }
+                // Bloquear bolas en columnas sin bola en la reserva (reserva vacía)
+                else if (reservaVacia) {
+                    ballClone.classList.add('bloqueada');
+                }
+                // Solo añadir eventos a bolas no bloqueadas del tablero
+                else if (index > 0 && !ballClone.classList.contains('bloqueada')) {
+                    ballClone.addEventListener('click', () => handleBallClick(espacio, index, columna));
+                }
             }
         });
     });
@@ -222,65 +263,92 @@ function handleBallClick(espacioClicked, clickedIndex, columna) {
     if (columna.classList.contains('animating')) return;
     columna.classList.add('animating');
 
-    // Guardar la bola que se movió
-    const bolaMovida = espacioClicked.querySelector('.ball');
-    if (!bolaMovida) {
+    // Encontrar el espacio vacío en las reservas
+    const todasLasColumnas = Array.from(document.querySelectorAll('.columna'));
+    let espacioVacioReserva = null;
+    let columnaDestino = null;
+
+    for (let col of todasLasColumnas) {
+        const reserva = col.querySelector('.espacio.reserva');
+        if (reserva && !reserva.querySelector('.ball')) {
+            espacioVacioReserva = reserva;
+            columnaDestino = col;
+            break;
+        }
+    }
+
+    if (!espacioVacioReserva) {
+        console.error('No se encontró espacio vacío en las reservas');
         columna.classList.remove('animating');
         return;
     }
 
-    const colorBolaMovida = bolaMovida.className.replace('ball ', '');
+    // Obtener el espacio de la reserva actual de esta columna
+    const reservaActual = espacios[0];
 
     // Calcular la altura de un espacio (incluyendo gap)
     const espacioHeight = espacioClicked.offsetHeight;
     const moveDistance = espacioHeight + GAME_CONFIG.COLUMN_GAP;
 
-    // Animar: las bolas superiores bajan
+    // Calcular la posición de la bola clicada y del espacio vacío
+    const posClicked = espacioClicked.getBoundingClientRect();
+    const posVacio = espacioVacioReserva.getBoundingClientRect();
+    const deltaX = posVacio.left - posClicked.left;
+    const deltaY = posVacio.top - posClicked.top;
+
+    // Aplicar transiciones a todos los espacios que van a moverse
+    for (let i = 0; i < clickedIndex; i++) {
+        espacios[i].style.transition = `transform ${GAME_CONFIG.ANIMATION_DURATION}ms ease-in-out`;
+    }
+
+    // Configurar transición para la bola clicada
+    espacioClicked.style.transition = `transform ${GAME_CONFIG.ANIMATION_DURATION}ms ease-in-out`;
+
+    // Usar requestAnimationFrame para asegurar sincronización
     requestAnimationFrame(() => {
+        // Convertir la reserva actual en tablero
+        reservaActual.classList.remove('reserva');
+
         // Mover visualmente todos los espacios superiores hacia abajo
         for (let i = 0; i < clickedIndex; i++) {
-            espacios[i].style.transition = `transform ${GAME_CONFIG.ANIMATION_DURATION}ms ease-in-out`;
             espacios[i].style.transform = `translateY(${moveDistance}px)`;
         }
 
-        // La bola clicada desaparece (fade out)
-        espacioClicked.style.transition = `opacity ${GAME_CONFIG.ANIMATION_DURATION}ms ease-in-out`;
-        espacioClicked.style.opacity = '0';
+        // Mover la bola clicada hacia el espacio vacío de la reserva
+        espacioClicked.style.transform = `translate(${deltaX}px, ${deltaY}px)`;
     });
 
     // Después de la animación, reorganizar el DOM
     setTimeout(() => {
-        // Reorganizar las bolas en el DOM
-        // Las bolas de los índices 0 a clickedIndex-1 se mueven un espacio hacia abajo
-        const bolasSuperiores = [];
-        for (let i = 0; i < clickedIndex; i++) {
-            const bola = espacios[i].querySelector('.ball');
-            if (bola) {
-                bolasSuperiores.push(bola.cloneNode(true));
-            }
+        // Extraer la bola del espacio clicado
+        const bolaMovida = espacioClicked.querySelector('.ball');
+
+        // Mover la bola al espacio vacío de la reserva
+        if (bolaMovida) {
+            espacioVacioReserva.appendChild(bolaMovida.cloneNode(true));
         }
 
-        // Limpiar espacios
-        for (let i = 0; i <= clickedIndex; i++) {
-            espacios[i].innerHTML = '';
-        }
+        // Vaciar el espacio clicado
+        espacioClicked.innerHTML = '';
 
-        // Colocar la bola movida en el primer espacio (arriba)
-        const nuevaBola = document.createElement('div');
-        nuevaBola.className = `ball ${colorBolaMovida}`;
-        espacios[0].appendChild(nuevaBola);
+        // Mover el espacio clicado (ahora vacío) a la reserva de su columna
+        columna.insertBefore(espacioClicked, columna.firstChild);
 
-        // Colocar las bolas superiores un espacio más abajo
-        for (let i = 0; i < bolasSuperiores.length; i++) {
-            espacios[i + 1].appendChild(bolasSuperiores[i]);
-        }
+        // Resetear transforms
+        espacios.forEach(espacio => {
+            espacio.style.transform = '';
+            espacio.style.transition = '';
+        });
 
-        // Resetear transforms y opacidad
-        for (let i = 0; i <= clickedIndex; i++) {
-            espacios[i].style.transform = '';
-            espacios[i].style.transition = '';
-            espacios[i].style.opacity = '';
-        }
+        espacioClicked.style.transform = '';
+        espacioClicked.style.transition = '';
+        espacioClicked.style.pointerEvents = '';
+
+        // El espacio vacío de la reserva destino sigue siendo reserva (ahora con bola)
+        // NO removemos la clase reserva de espacioVacioReserva
+
+        // Convertir el espacio clicado (ahora vacío) en la nueva reserva
+        espacioClicked.classList.add('reserva');
 
         columna.classList.remove('animating');
 
