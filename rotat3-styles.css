@@ -1,0 +1,263 @@
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+}
+
+html, body {
+    width: 100%;
+    height: 100%;
+    overflow: hidden;
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
+    -webkit-tap-highlight-color: transparent;
+    touch-action: manipulation;
+}
+
+body {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+}
+
+#game-container {
+    width: 100%;
+    height: 100%;
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+    padding: 1rem;
+    max-width: 100vw;
+    max-height: 100vh;
+}
+
+header {
+    text-align: center;
+    padding: 1rem 0;
+    color: white;
+}
+
+header h1 {
+    font-size: clamp(1.5rem, 5vw, 2.5rem);
+    text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.3);
+}
+
+#game-area {
+    flex: 1;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    gap: 15px;
+    padding: 1rem;
+    margin: 1rem 0;
+    overflow: hidden;
+}
+
+/* Zona de preview de Tetris */
+#tetris-preview {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    padding: 0.5rem;
+    min-height: 60px;
+}
+
+.tetris-grid {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    grid-template-rows: repeat(4, 1fr);
+    gap: 3px;
+    width: fit-content;
+}
+
+.tetris-cell {
+    width: 25px;
+    height: 25px;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+}
+
+.tetris-ball {
+    width: 100%;
+    height: 100%;
+    border-radius: 50%;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.15);
+}
+
+.tetris-ball.filled {
+    background: linear-gradient(135deg, #9e9e9e 0%, #757575 100%);
+}
+
+.tetris-ball.empty {
+    background: white;
+}
+
+footer {
+    text-align: center;
+    padding: 1rem 0;
+    color: white;
+    font-size: clamp(0.875rem, 2.5vw, 1rem);
+    display: flex;
+    justify-content: center;
+    align-items: center;
+}
+
+/* Estilos responsivos adicionales para dispositivos móviles */
+@media (max-height: 600px) {
+    #game-container {
+        padding: 0.5rem;
+    }
+
+    header, footer {
+        padding: 0.5rem 0;
+    }
+
+    #game-area {
+        margin: 0.5rem 0;
+    }
+}
+
+/* Prevenir selección de texto en el juego */
+#game-area {
+    user-select: none;
+    -webkit-user-select: none;
+    -moz-user-select: none;
+    -ms-user-select: none;
+}
+
+/* Contenedor principal - Columna vertical */
+.columna {
+    position: relative;
+    width: min(80px, 18vw);
+    height: min(450px, 65vh);
+    display: flex;
+    flex-direction: column;
+    gap: 5px;
+    padding: 10px;
+    transition: transform 0.6s ease-in-out;
+}
+
+/* Espacio individual para cada bola */
+.espacio {
+    flex: 1;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+/* Bolas */
+.ball {
+    width: min(60px, 15vw);
+    height: min(60px, 15vw);
+    border-radius: 50%;
+    box-shadow: 0 2px 6px rgba(0, 0, 0, 0.15);
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    cursor: pointer;
+    transition: transform 0.2s ease;
+}
+
+/* Bolas negras no son clicables */
+.ball.black {
+    cursor: default;
+    pointer-events: none;
+}
+
+/* Bolas bloqueadas */
+.ball.bloqueada {
+    cursor: default;
+    pointer-events: none;
+    position: relative;
+}
+
+.ball.bloqueada::before {
+    content: 'lock';
+    font-family: 'Material Symbols Outlined';
+    opacity: 0.3;
+    position: absolute;
+    font-size: 30px;
+    color: rgba(255, 255, 255, 0.9);
+    text-shadow: 0 2px 4px rgba(0, 0, 0, 0.5);
+    font-variation-settings:
+        'FILL' 1,
+        'wght' 400,
+        'GRAD' 0,
+        'opsz' 48;
+}
+
+/* Efecto hover en las bolas del tablero (excepto negras y bloqueadas) */
+.espacio:not(.reserva) .ball:not(.black):not(.bloqueada):hover {
+    transform: scale(1.1);
+}
+
+.espacio:not(.reserva) .ball:not(.black):not(.bloqueada):active {
+    transform: scale(0.95);
+}
+
+.ball.black {
+    background: #5D5D5D;
+}
+
+.ball.red {
+    background: #FF6B6B;
+}
+
+.ball.green {
+    background: #51CF66;
+}
+
+.ball.blue {
+    background: #4DABF7;
+}
+
+.ball.yellow {
+    background: #FFD43B;
+}
+
+/* Botón de rotación */
+#rotate-btn {
+    padding: 15px 40px;
+    font-size: clamp(1rem, 3vw, 1.25rem);
+    font-weight: bold;
+    color: #764ba2;
+    background: white;
+    border: none;
+    border-radius: 50px;
+    cursor: pointer;
+    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.2);
+    transition: all 0.3s ease;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    justify-content: center;
+}
+
+#rotate-btn .material-symbols-outlined {
+    font-size: 1.5em;
+    vertical-align: middle;
+}
+
+#rotate-btn:hover {
+    transform: scale(1.05);
+    box-shadow: 0 6px 20px rgba(0, 0, 0, 0.4);
+}
+
+#rotate-btn:active {
+    transform: scale(0.98);
+}
+
+/* Ajustes para pantallas pequeñas */
+@media (max-width: 400px) {
+    #balls-container {
+        padding: 15px;
+        gap: 8px;
+    }
+
+    #rotate-btn {
+        padding: 12px 30px;
+    }
+}
