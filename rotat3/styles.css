@@ -93,6 +93,23 @@ header h1 {
     background: white;
 }
 
+/* Colores de Tetris - iguales a las bolas del juego */
+.tetris-ball.red {
+    background: #FF6B6B;
+}
+
+.tetris-ball.green {
+    background: #51CF66;
+}
+
+.tetris-ball.blue {
+    background: #4DABF7;
+}
+
+.tetris-ball.yellow {
+    background: #FFD43B;
+}
+
 footer {
     text-align: center;
     padding: 1rem 0;

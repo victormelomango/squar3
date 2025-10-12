@@ -462,6 +462,10 @@ function generarFiguraTetris() {
         }
     }
 
+    // Seleccionar un color aleatorio para la figura de Tetris
+    const coloresTetris = ['red', 'green', 'blue', 'yellow'];
+    const colorAleatorio = coloresTetris[Math.floor(Math.random() * coloresTetris.length)];
+
     // Crear el contenedor de la cuadrícula
     const preview = document.getElementById('tetris-preview');
     preview.innerHTML = '';
@@ -480,8 +484,8 @@ function generarFiguraTetris() {
             ball.className = 'tetris-ball';
             
             if (figuraDesplazada[i][j] === 1) {
-                // Casilla ocupada - bola gris
-                ball.classList.add('filled');
+                // Casilla ocupada - bola de color aleatorio
+                ball.classList.add(colorAleatorio);
             } else {
                 // Casilla vacía - bola blanca
                 ball.classList.add('empty');
